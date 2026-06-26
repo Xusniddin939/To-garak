@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maktab Kundaligi Tizimi</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        input, select {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .class-section {
+            margin-top: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #fafafa;
+        }
+        .class-title {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-top: 0;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        ol {
+            padding-left: 20px;
+        }
+        li {
+            padding: 5px 0;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏫 Maktab Elektron Kundaligi</h1>
+    <hr>
+
+    <h3>Yangi sinf qo'shish</h3>
+    <div class="form-group">
+        <input type="text" id="classInput" placeholder="Masalan: 9-A sinf, 10-B sinf">
+        <button onclick="addSpecification()">Sinfni Qo'shish</button>
+    </div>
+
+    <h3>Sinfga o'quvchi qo'shish</h3>
+    <div class="form-group">
+        <select id="classSelect">
+            <option value="">-- Sinfni tanlang --</option>
+        </select>
+        <input type="text" id="studentInput" placeholder="O'quvchining ismi va familiyasi">
+        <button onclick="addStudent()">O'quvchini Qo'shish</button>
+    </div>
+
+    <hr>
+
+    <h3>Sinflar va O'quvchilar Ro'yxati</h3>
+    <div id="dashboard"></div>
+</div>
+
+<script>
+    // Ma'lumotlarni xotirada saqlash uchun massiv
+    let schoolData = JSON.parse(localStorage.getItem('schoolData')) || [];
+
+    // Sahifa yuklanganda bor ma'lumotlarni ko'rsatish
+    updateUI();
+
+    // Yangi sinf qo'shish funksiyasi
+    function addSpecification() {
+        let className = document.getElementById('classInput').value.trim();
+        if (className === '') {
+            alert('Iltimos, sinf nomini kiriting!');
+            return;
+        }
+
+        // Bir xil nomli sinf borligini tekshirish
+        if (schoolData.some(c => c.name.toLowerCase() === className.toLowerCase())) {
+            alert('Bu sinf allaqachon mavjud!');
+            return;
+        }
+
+        schoolData.push({
+            name: className,
+            students: []
+        });
+
+        document.getElementById('classInput').value = '';
+        saveAndRefresh();
+    }
+
+    // Yangi o'quvchi qo'shish funksiyasi
+    function addStudent() {
+        let selectedClassIndex = document.getElementById('classSelect').value;
+        let studentName = document.getElementById('studentInput').value.trim();
+
+        if (selectedClassIndex === '') {
+            alert('Iltimos, avval sinfni tanlang!');
+            return;
+        }
+        if (studentName === '') {
+            alert('Iltimos, o\'quvchi ismini kiriting!');
+            return;
+        }schoolData[selectedClassIndex].students.push(studentName);
+        document.getElementById('studentInput').value = '';
+        saveAndRefresh();
+    }
+
+    // Ma'lumotlarni saqlash va ekran yangilash
+    function saveAndRefresh() {
+        localStorage.setItem('schoolData', JSON.stringify(schoolData));
+        updateUI();
+    }
+
+    // Ekranni yangilash (Sinflar va o'quvchilarni chizish)
+    function updateUI() {
+        let dashboard = document.getElementById('dashboard');
+        let classSelect = document.getElementById('classSelect');
+        
+        dashboard.innerHTML = '';
+        classSelect.innerHTML = '<option value="">-- Sinfni tanlang --</option>';
+
+        if (schoolData.length === 0) {
+            dashboard.innerHTML = '<p style="color: gray;">Hozircha hech qanday sinf qo\'shilmagan.</p>';
+        }
+
+        schoolData.forEach((classItem, index) => {
+            // Select menyusiga sinfni qo'shish
+            let option = document.createElement('option');
+            option.value = index;
+            option.textContent = classItem.name;
+            classSelect.appendChild(option);
+
+            // Vizual blok yaratish
+            let classBox = document.createElement('div');
+            classBox.className = 'class-section';
+
+            let title = document.createElement('h4');
+            title.className = 'class-title';
+            title.textContent = classItem.name;
+            classBox.appendChild(title);
+
+            let list = document.createElement('ol');
+            if (classItem.students.length === 0) {
+                list.innerHTML = '<span style="color: gray; font-size: 14px;">Bu sinfda hali o\'quvchilar yo\'q</span>';
+            } else {
+                classItem.students.forEach(student => {
+                    let li = document.createElement('li');
+                    li.textContent = student;
+                    list.appendChild(li);
+                });
+            }
+            classBox.appendChild(list);
+            dashboard.appendChild(classBox);
+        });
+    }
+</script>
+
+</body>
+</html>
